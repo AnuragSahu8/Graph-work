@@ -18,7 +18,7 @@ def main():
     
     # Step 3: Ingest the data into Neo4j
     print("Step 3: Ingesting data into Neo4j...")
-    # ingest_data(df)
+    ingest_data(df)
 
 
 

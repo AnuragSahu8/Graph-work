@@ -1,8 +1,31 @@
 from src.db.neo4j_client import Neo4jClient
 
 
+def create_indexes_and_constraints(client):
+    """Create database-level unique constraints and indexes to prevent duplicates"""
+    constraints = [
+        "CREATE CONSTRAINT unique_employee_id IF NOT EXISTS FOR (e:Employee) REQUIRE e.id IS UNIQUE;",
+        "CREATE CONSTRAINT unique_timesheet IF NOT EXISTS FOR (t:TimeSheet) REQUIRE (t.emp_id, t.week_start) IS UNIQUE;",
+        "CREATE CONSTRAINT unique_bu_name IF NOT EXISTS FOR (bu:BusinessUnit) REQUIRE bu.name IS UNIQUE;",
+        "CREATE CONSTRAINT unique_bg_name IF NOT EXISTS FOR (bg:BusinessGroup) REQUIRE bg.name IS UNIQUE;",
+        "CREATE CONSTRAINT unique_re_name IF NOT EXISTS FOR (re:ResourceEntity) REQUIRE re.name IS UNIQUE;"
+    ]
+    
+    for constraint in constraints:
+        try:
+            client.execute_write(constraint)
+            print(f"✓ Created constraint: {constraint.split('CONSTRAINT')[1].split('IF')[0].strip()}")
+        except Exception as e:
+            print(f"⚠ Constraint already exists or error: {str(e)[:100]}")
+    
+    print("Database constraints setup completed.")
+
+
 def ingest_data(df):
     client = Neo4jClient()
+    
+    # Create constraints first (idempotent - won't fail if already exist)
+    create_indexes_and_constraints(client)
 
     query = """
     UNWIND $rows as row
